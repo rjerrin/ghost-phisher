@@ -222,21 +222,25 @@ class Ghost_phisher(QtGui.QMainWindow,Ui_ghost_phisher):    # Main class for all
         global interface_cards_http
         global interface_cards
 
-        card_list = os.listdir('/sys/class/net')                        # Directory contains list of interface cards
+#       card_list = os.listdir('/sys/class/net')                        # Directory contains list of interface cards
+        card_list =  commands.getoutput('ifconfig -l').split()
         terminal_output = commands.getstatusoutput('ifconfig')[1]
 
         for iterate in card_list:
             if iterate in terminal_output:
-                if iterate != 'lo':                                     # Skip default loopback address name cause that will be manually defined
+                if iterate != 'lo0':                                     # Skip default loopback address name cause that will be manually defined
                     interface_card_list.append(iterate)
 
         for available_cards in interface_card_list:
             ip_output = commands.getstatusoutput('ifconfig %s | grep \'s\''%(available_cards))
             interface_list  = ip_output[1].splitlines()
-            process_interface_list = interface_list[0].strip(' ')
+            #process_interface_list = interface_list[0].strip(' ')
+            process_interface_list = interface_list[2].strip(' ')
             try:
-                index_number = process_interface_list.index('Bcast:')
-                ip_address = process_interface_list[0:index_number].strip('Mask: inet addr: ')
+                #index_number = process_interface_list.index('Bcast:')
+                index_number = process_interface_list.index('netmask')
+                #ip_address = process_interface_list[0:index_number].strip('Mask: inet addr: ')
+                ip_address = process_interface_list[0:index_number].strip('\t inet  ')
                 usable_interface_cards[available_cards] = ip_address        # Add interfaces cards and IP addresses to dictionary
             except ValueError:
                 if 'Mask:' in process_interface_list:
@@ -1975,16 +1979,18 @@ iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port
         self.start_sniffing_button_3.setEnabled(False)
         interfaces = commands.getoutput("iwconfig").splitlines()
 
-        for card in os.listdir("/sys/class/net"):
+        #for card in os.listdir("/sys/class/net"):
+        for card in commands.getoutput('ifconfig -l').split():
             if(card.startswith("mon")):
                 commands.getoutput("airmon-ng stop " + card)
 
-        sys_interface_cards = os.listdir("/sys/class/net")
+        #sys_interface_cards = os.listdir("/sys/class/net")
+        sys_interface_cards = commands.getoutput('ifconfig -l').split()
 
         for card in sys_interface_cards:
             if(card.startswith("mon")):
                 continue
-            if(card == "lo"):               # Loopback interface
+            if(card == "lo0"):               # Loopback interface
                 continue
 
             for card_info in interfaces:
@@ -2433,7 +2439,8 @@ iptables -t nat -A PREROUTING -p tcp --destination-port 80 -j REDIRECT --to-port
 
     def refresh_interface_arp(self):
         path = "/sys/class/net"
-        sys_interface = os.listdir(path)
+        #sys_interface = os.listdir(path)
+        sys_interface = commands.getoutput('ifconfig -l').split()
         self.combo_interface_3.clear()
         if(sys_interface):
             self.combo_interface_3.addItem("Select Interface")
