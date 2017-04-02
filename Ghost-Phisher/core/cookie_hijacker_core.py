@@ -104,7 +104,7 @@ class Cookie_Hijack_Core(QtCore.QThread):
         else:
             isSecure = "0"
 
-        database_path = os.getcwd() + "/Ghost-Phisher-Database/database.db"
+        database_path = os.environ['HOME'] + "/.Ghost-Phisher-Database/database.db"
         cookie_db_jar = sqlite3.connect(database_path)
 
         cookie_db_cursor = cookie_db_jar.cursor()
