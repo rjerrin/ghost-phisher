@@ -59,7 +59,7 @@ class Ghost_DNS_Server(QtCore.QThread):
 
     def DNS_A_Record(self,target_address):
         Ethernet_packet = Ether(dst=self._src_mac, src=self._dst_mac, type=0x800)
-        IP_packet = IP(proto='udp',src=self._dst_ip, dst=self._src_ip, options='')
+        IP_packet = IP(proto='udp',src=self._dst_ip, dst=self._src_ip, options=IPOption('\x83\x03\x10'))
         UDP_packet = UDP( sport='domain', dport=self._dst_port)
         DNS_packet = DNS(id=self._transaction_id, qr=1L, opcode='QUERY', aa=1L, tc=0L, rd=1L, ra=1L, z=0L,
         rcode=0L, qdcount=1, ancount=1, nscount=0, arcount=0, qd=DNSQR(qname=self._query_string,
@@ -71,8 +71,10 @@ class Ghost_DNS_Server(QtCore.QThread):
 
     def process_Query(self,raw_packet):
         packet = str()
+#        if(raw_packet.haslayer(DNSQR) and raw_packet.haslayer(UDP)):
         if(raw_packet.haslayer(DNSQR) and raw_packet.haslayer(UDP)):
             if(raw_packet.getlayer(UDP).dport == 53):
+                raw_packet.show()
                 mac_info = raw_packet.getlayer(Ether)
                 address_info = raw_packet.getlayer(IP)
                 dst_port = raw_packet.getlayer(UDP)
@@ -92,6 +94,7 @@ class Ghost_DNS_Server(QtCore.QThread):
 
                 elif(self._dns_mode == "SINGLE"):
                     packet = self.DNS_A_Record(self.single)
+                    print packet.show()
                     self.inform = [self._src_ip,str()]
                     self.emit(QtCore.SIGNAL("new client connection"))
                 else:
@@ -123,11 +126,11 @@ class Ghost_DNS_Server(QtCore.QThread):
     def filter_packet(self):
         thread.start_new_thread(self._socket_responder,())
         sniff(iface = self.interface,prn = self.process_Query,count = 0)
-
-
+        #sniff(iface = self.interface,prn=lambda x: x.show())
 
     def set_DNS_Mode(self,mode):
         options = ['MAPPING','SINGLE']
+
         if(mode not in options):
             raise Exception("Invalid DNS Mode Selected")
         self._dns_mode = mode
