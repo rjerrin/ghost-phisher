@@ -74,7 +74,6 @@ class Ghost_DNS_Server(QtCore.QThread):
 #        if(raw_packet.haslayer(DNSQR) and raw_packet.haslayer(UDP)):
         if(raw_packet.haslayer(DNSQR) and raw_packet.haslayer(UDP)):
             if(raw_packet.getlayer(UDP).dport == 53):
-                raw_packet.show()
                 mac_info = raw_packet.getlayer(Ether)
                 address_info = raw_packet.getlayer(IP)
                 dst_port = raw_packet.getlayer(UDP)
